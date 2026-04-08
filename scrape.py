@@ -5,14 +5,13 @@ from bs4 import BeautifulSoup
 import time
 
 BASE_URL = "https://www.dshome.bg/boltove?page={}"
-
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (X11; Linux x86_64)"
 }
 
 def scrape_page(page):
     url = BASE_URL.format(page)
-    print(f"Fetching page {page}...")
+    print(f"\n=== PAGE {page} ===")
 
     try:
         r = requests.get(url, headers=HEADERS, timeout=10)
@@ -25,16 +24,21 @@ def scrape_page(page):
 
     products = []
 
-    # Each product is inside an <a> card
-    cards = soup.select("a.bg-white.rounded-lg")
+    # better selector
+    cards = soup.select("a[href*='/boltove/']")
 
     for card in cards:
         name_el = card.select_one("h3")
         price_el = card.select_one("span.text-red-600")
 
-        name = name_el.get_text(strip=True) if name_el else "N/A"
-        price = price_el.get_text(strip=True) if price_el else "N/A"
+        # skip broken entries
+        if not name_el or not price_el:
+            continue
 
+        name = name_el.get_text(strip=True)
+        price = price_el.get_text(strip=True)
+
+        print(f"{name} | {price}")
         products.append((name, price))
 
     return products
@@ -43,17 +47,18 @@ def scrape_page(page):
 def main():
     all_products = []
 
-    for page in range(1, 25):  # pages 1–24
-        products = scrape_page(page)
-        all_products.extend(products)
+    with open("result.txt", "w", encoding="utf-8") as f:
+        for page in range(1, 25):
+            products = scrape_page(page)
+            all_products.extend(products)
 
-        # be polite to server
-        time.sleep(0.5)
+            f.write(f"\n=== PAGE {page} ===\n")
+            for name, price in products:
+                f.write(f"{name} | {price}\n")
 
-    print("\n=== RESULTS ===\n")
+            time.sleep(0.5)
 
-    for name, price in all_products:
-        print(f"{name} | {price}")
+    print("\nSaved to result.txt")
 
 
 if __name__ == "__main__":
