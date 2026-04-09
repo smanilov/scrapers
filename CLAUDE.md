@@ -4,18 +4,19 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this project does
 
-Scrapes product listings (names and prices) from three sites:
+Scrapes product listings (names and prices) from four sites:
 
 - `dshome.bg/boltove` — bolts/fasteners, 24 pages, output to `result-dshome.txt`
 - `praktiker.bg` — compressors, single page, output to `result-praktiker.txt`
 - `mr-bricolage.bg` — compressors, single page, output to `result-mrbricolage.txt`
+- `bauhaus.bg` — compressors/pumps, single page, output to `result-bauhaus.txt`
 
 ## Running the scrapers
 
 `run.sh` is the canonical entry point:
 
 ```bash
-./run.sh <dshome|praktiker|mrbricolage> [--cached]
+./run.sh <dshome|praktiker|mrbricolage|bauhaus> [--cached]
 ```
 
 Or directly:
@@ -24,6 +25,7 @@ Or directly:
 python3 scrape-dshome.py [--cached]
 python3 scrape-praktiker.py [--cached]
 python3 scrape-mrbricolage.py [--cached]
+python3 scrape-bauhaus.py [--cached]
 ```
 
 `--cached` reads from local HTML files instead of making network requests.
@@ -38,7 +40,7 @@ Parsed: X / Y
 Product name | price
 ```
 
-Praktiker and mr-bricolage report both currencies: `name | 9.71 € | 18.99 лв.`
+All scripts report both currencies: `name | 9.71 € | 18.99 лв.`
 
 ## Caching
 
@@ -48,6 +50,7 @@ Download cached HTML with `cache.sh`:
 ./cache.sh dshome       # saves dshome/page-1.html … page-24.html
 ./cache.sh praktiker    # saves praktiker_cache.html
 ./cache.sh mrbricolage  # saves mrbricolage_cache.html
+./cache.sh bauhaus      # saves bauhaus_cache.html
 ```
 
 All targets use `-L` (follow redirects) and a realistic Firefox user-agent. mr-bricolage additionally sends `Accept` and `Accept-Language` headers required for SSR rendering.
@@ -70,7 +73,7 @@ All three scripts follow the same structure:
 
 ### scrape-dshome.py
 
-- `scrape_page(page, cached=False)` — reads `dshome/page-{page}.html` or fetches. Uses `a[href*='/boltove/']` for cards, `h3` for name, `span.text-red-600` for price.
+- `scrape_page(page, cached=False)` — reads `dshome/page-{page}.html` or fetches. Uses `a[href*='/boltove/']` for cards, `h3` for name, `span.text-red-600` for price (the site pre-formats both EUR and BGN into this span).
 - `main()` — loops pages 1–24, writes `result-dshome.txt`, sleeps 0.5s between live requests (skipped when cached).
 
 ### scrape-praktiker.py

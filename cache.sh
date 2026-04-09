@@ -26,6 +26,10 @@ case "$target" in
             -o mrbricolage_cache.html \
             "https://mr-bricolage.bg/instrumenti/avtoaksesoari/kompresori-pompi/c/006008021?pageSize=50"
         ;;
+    bauhaus)
+        curl -L -A "$UA" -o bauhaus_cache.html \
+            "https://bauhaus.bg/pompi-i-kompresori-za-gumi/c/1928"
+        ;;
     *)
         echo "Unknown target: $target" >&2
         exit 1
