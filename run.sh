@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -eo pipefail
 
-script="${1:?Usage: run.sh <dshome|praktiker|mrbricolage|bauhaus> [--cached]}"
+script="${1:?Usage: run.sh <dshome|praktiker|mrbricolage|bauhaus|homemax> [--cached]}"
 shift
 
 python3 "scrape-${script}.py" "$@"

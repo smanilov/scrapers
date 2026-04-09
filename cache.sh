@@ -30,6 +30,10 @@ case "$target" in
         curl -L -A "$UA" -o bauhaus_cache.html \
             "https://bauhaus.bg/pompi-i-kompresori-za-gumi/c/1928"
         ;;
+    homemax)
+        curl -L -A "$UA" -o homemax_cache.html \
+            "https://www.home-max.bg/instrumenti-i-oborudvane/avtoprinadlejnosti/avtoinstrumenti/pompi-i-kompresori/"
+        ;;
     *)
         echo "Unknown target: $target" >&2
         exit 1

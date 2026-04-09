@@ -4,19 +4,20 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this project does
 
-Scrapes product listings (names and prices) from four sites:
+Scrapes product listings (names and prices) from five sites:
 
 - `dshome.bg/boltove` — bolts/fasteners, 24 pages, output to `result-dshome.txt`
 - `praktiker.bg` — compressors, single page, output to `result-praktiker.txt`
 - `mr-bricolage.bg` — compressors, single page, output to `result-mrbricolage.txt`
 - `bauhaus.bg` — compressors/pumps, single page, output to `result-bauhaus.txt`
+- `home-max.bg` — compressors/pumps, single page, output to `result-homemax.txt`
 
 ## Running the scrapers
 
 `run.sh` is the canonical entry point:
 
 ```bash
-./run.sh <dshome|praktiker|mrbricolage|bauhaus> [--cached]
+./run.sh <dshome|praktiker|mrbricolage|bauhaus|homemax> [--cached]
 ```
 
 Or directly:
@@ -26,6 +27,7 @@ python3 scrape-dshome.py [--cached]
 python3 scrape-praktiker.py [--cached]
 python3 scrape-mrbricolage.py [--cached]
 python3 scrape-bauhaus.py [--cached]
+python3 scrape-homemax.py [--cached]
 ```
 
 `--cached` reads from local HTML files instead of making network requests.
@@ -42,6 +44,8 @@ Product name | price
 
 All scripts report both currencies: `name | 9.71 € | 18.99 лв.`
 
+Note: home-max.bg displays round prices with a dash for cents (e.g. `17.- ЛВ.`), reported as-is.
+
 ## Caching
 
 Download cached HTML with `cache.sh`:
@@ -51,6 +55,7 @@ Download cached HTML with `cache.sh`:
 ./cache.sh praktiker    # saves praktiker_cache.html
 ./cache.sh mrbricolage  # saves mrbricolage_cache.html
 ./cache.sh bauhaus      # saves bauhaus_cache.html
+./cache.sh homemax      # saves homemax_cache.html
 ```
 
 All targets use `-L` (follow redirects) and a realistic Firefox user-agent. mr-bricolage additionally sends `Accept` and `Accept-Language` headers required for SSR rendering.
@@ -66,7 +71,7 @@ Install with: `pip install requests beautifulsoup4`
 
 ## Code structure
 
-All three scripts follow the same structure:
+All scripts follow the same structure:
 
 - `scrape_page(cached=False)` — fetches live or reads from cache; prints each product inline; returns `(products, parsed_count, total_cards)`
 - `main()` — parses `--cached` flag, calls `scrape_page()`, writes result file, prints summary
@@ -85,6 +90,16 @@ All three scripts follow the same structure:
 
 - Uses `div.product` for cards, `h2.product__title a` for name, `div.product__price-value` for EUR/BGN.
 - Writes `result-mrbricolage.txt`.
+
+### scrape-bauhaus.py
+
+- Uses `div.product_holder` for cards, `a.product-name` for name, `div.product-price table tr` rows for EUR/BGN (price split across `td`/`sup` elements).
+- Writes `result-bauhaus.txt`.
+
+### scrape-homemax.py
+
+- Uses `div.product-box-item` for cards, `.product-box-title` for name, `.price-item-wrapper` for EUR/BGN (price split across `.price-holder` text + `sup` for decimals, `.currency` for unit).
+- Writes `result-homemax.txt`.
 
 ## Known limitations / TODOs
 
