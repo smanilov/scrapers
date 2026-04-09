@@ -43,8 +43,8 @@ Praktiker prices include both currencies: `name | 9.71 € | 18.99 лв.`
 Download cached HTML with the provided shell scripts:
 
 ```bash
-./cache-dshome.sh       # saves dshome/page-1.html … page-24.html
-./cache-praktiker.sh    # saves praktiker_cache.html
+./cache.sh dshome       # saves dshome/page-1.html … page-24.html
+./cache.sh praktiker    # saves praktiker_cache.html
 ```
 
 Then run with `--cached` to parse from disk.
