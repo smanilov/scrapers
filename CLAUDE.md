@@ -23,17 +23,17 @@ Scrapes product listings (names and prices) from eight sites:
 ./run.sh <dshome|praktiker|mrbricolage|bauhaus|homemax|temax|masterhaus|praktis> [--cached]
 ```
 
-Or directly:
+Or directly (run from the project root):
 
 ```bash
-python3 scrape-dshome.py [--cached]
-python3 scrape-praktiker.py [--cached]
-python3 scrape-mrbricolage.py [--cached]
-python3 scrape-bauhaus.py [--cached]
-python3 scrape-homemax.py [--cached]
-python3 scrape-temax.py [--cached]
-python3 scrape-masterhaus.py [--cached]
-python3 scrape-praktis.py [--cached]
+python3 scrapers/scrape-dshome.py [--cached]
+python3 scrapers/scrape-praktiker.py [--cached]
+python3 scrapers/scrape-mrbricolage.py [--cached]
+python3 scrapers/scrape-bauhaus.py [--cached]
+python3 scrapers/scrape-homemax.py [--cached]
+python3 scrapers/scrape-temax.py [--cached]
+python3 scrapers/scrape-masterhaus.py [--cached]
+python3 scrapers/scrape-praktis.py [--cached]
 ```
 
 `--cached` reads from local HTML files instead of making network requests.
@@ -57,14 +57,14 @@ Note: home-max.bg displays round prices with a dash for cents (e.g. `17.- ЛВ.`
 Download cached HTML with `cache.sh`:
 
 ```bash
-./cache.sh dshome       # saves dshome/page-1.html … page-24.html
-./cache.sh praktiker    # saves praktiker_cache.html
-./cache.sh mrbricolage  # saves mrbricolage_cache.html
-./cache.sh bauhaus      # saves bauhaus_cache.html
-./cache.sh homemax      # saves homemax_cache.html
-./cache.sh temax        # saves temax_cache.html
-./cache.sh masterhaus   # saves masterhaus_cache.html
-./cache.sh praktis      # saves praktis_cache.html
+./cache.sh dshome       # saves cache/dshome/page-1.html … page-24.html
+./cache.sh praktiker    # saves cache/praktiker_cache.html
+./cache.sh mrbricolage  # saves cache/mrbricolage_cache.html
+./cache.sh bauhaus      # saves cache/bauhaus_cache.html
+./cache.sh homemax      # saves cache/homemax_cache.html
+./cache.sh temax        # saves cache/temax_cache.html
+./cache.sh masterhaus   # saves cache/masterhaus_cache.html
+./cache.sh praktis      # saves cache/praktis_cache.html
 ```
 
 All targets use `-L` (follow redirects) and a realistic Firefox user-agent. mr-bricolage additionally sends `Accept` and `Accept-Language` headers required for SSR rendering.
@@ -92,7 +92,7 @@ Shared infrastructure used by all scrapers except dshome:
 
 ### scrape-dshome.py
 
-- `scrape_page(page, cached=False)` — reads `dshome/page-{page}.html` or fetches. Uses `a[href*='/boltove/']` for cards, `h3` for name, `span.text-red-600` for price (the site pre-formats both EUR and BGN into this span).
+- `scrape_page(page, cached=False)` — reads `cache/dshome/page-{page}.html` or fetches. Uses `a[href*='/boltove/']` for cards, `h3` for name, `span.text-red-600` for price (the site pre-formats both EUR and BGN into this span).
 - `main()` — loops pages 1–24, writes `result-dshome.txt`, sleeps 0.5s between live requests (skipped when cached).
 
 ### Single-page scrapers (praktiker, mrbricolage, bauhaus, homemax, temax, masterhaus, praktis)

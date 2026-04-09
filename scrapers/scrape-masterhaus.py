@@ -3,8 +3,8 @@
 from scrape_common import HEADERS, scrape, run
 
 URL = "https://www.masterhaus.bg/bg/products/mashini-i-instrumenti/stroitelna-tehnika-i-mashini/kompresori"
-CACHE_FILE = "masterhaus_cache.html"
-RESULT_FILE = "result-masterhaus.txt"
+CACHE_FILE = "cache/masterhaus_cache.html"
+RESULT_FILE = "results/result-masterhaus.txt"
 
 
 def _parse_price(el):
