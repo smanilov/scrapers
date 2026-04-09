@@ -4,10 +4,12 @@ import argparse
 import requests
 from bs4 import BeautifulSoup
 
-URL = "https://praktiker.bg/en/Avto-i-velo/Sigurnost-i-bezopasnost/Kompresori/c/P13060305?pageSize=92&currentPage=0"
-CACHE_FILE = "praktiker_cache.html"
+URL = "https://mr-bricolage.bg/instrumenti/avtoaksesoari/kompresori-pompi/c/006008021?pageSize=50"
+CACHE_FILE = "mrbricolage_cache.html"
 HEADERS = {
-    "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:124.0) Gecko/20100101 Firefox/124.0"
+    "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:124.0) Gecko/20100101 Firefox/124.0",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "Accept-Language": "bg,en;q=0.5",
 }
 
 
@@ -27,26 +29,21 @@ def scrape_page(cached=False):
         html = r.text
 
     soup = BeautifulSoup(html, "html.parser")
-    boxes = soup.select("te-product-box")
+    boxes = soup.select("div.product")
     total_cards = len(boxes)
 
     products = []
 
     for box in boxes:
-        name = next(
-            (a.get_text(strip=True) for a in box.select("a") if len(a.get_text(strip=True)) > 5),
-            None,
-        )
-        def extract(currency_str, suffix):
-            w = next((w for w in box.select(".price-wrapper") if any(currency_str in s for s in w.strings)), None)
-            if not w:
-                return None
-            val = w.select_one(".product-price__value")
-            return val.get_text(strip=True) + suffix if val else None
+        name_el = box.select_one("h2.product__title a")
+        price_els = box.select("div.product__price-value")
+        if not name_el or not price_els:
+            continue
 
-        bgn = extract("лв", " лв.")
-        eur = extract("€", " €")
-        if not name or not bgn:
+        name = name_el.get_text(strip=True)
+        eur = next((p.get_text(strip=True) for p in price_els if "€" in p.get_text()), None)
+        bgn = next((p.get_text(strip=True) for p in price_els if "ЛВ" in p.get_text(strip=True).upper()), None)
+        if not bgn:
             continue
 
         price = f"{eur} | {bgn}" if eur else bgn
@@ -66,7 +63,7 @@ def main():
 
     products, parsed_count, total_cards = scrape_page(cached=args.cached)
 
-    with open("result-praktiker.txt", "w", encoding="utf-8") as f:
+    with open("result-mrbricolage.txt", "w", encoding="utf-8") as f:
         f.write("\n=== PRODUCTS ===\n")
         f.write(f"Parsed: {parsed_count} / {total_cards}\n")
         for name, price in products:
@@ -74,7 +71,7 @@ def main():
 
     print("\n=== SUMMARY ===")
     print(f"Total parsed: {parsed_count} / {total_cards}")
-    print("\nSaved to result-praktiker.txt")
+    print("\nSaved to result-mrbricolage.txt")
 
 
 if __name__ == "__main__":
