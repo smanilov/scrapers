@@ -80,53 +80,32 @@ Install with: `pip install requests beautifulsoup4`
 
 ## Code structure
 
-All scripts follow the same structure:
+### scrape_common.py
 
-- `scrape_page(cached=False)` — fetches live or reads from cache; prints each product inline; returns `(products, parsed_count, total_cards)`
-- `main()` — parses `--cached` flag, calls `scrape_page()`, writes result file, prints summary
+Shared infrastructure used by all scrapers except dshome:
+
+- `HEADERS` — default Firefox user-agent dict
+- `load_html(url, cache_file, headers, cached)` — fetches live or reads from cache file
+- `scrape(url, cache_file, headers, cached, get_cards, get_name, get_price)` — shared iteration loop: parse HTML, call `get_cards(soup)` for the list of card elements, then call `get_name(box)` and `get_price(box)` per card; skips cards where either returns `None`; prints inline and returns `(products, parsed_count, total_cards)`
+- `write_results(result_file, products, parsed_count, total_cards)` — writes output file
+- `run(result_file, cache_file, scrape_fn)` — parses `--cached` flag, calls `scrape_fn`, writes results, prints summary
 
 ### scrape-dshome.py
 
 - `scrape_page(page, cached=False)` — reads `dshome/page-{page}.html` or fetches. Uses `a[href*='/boltove/']` for cards, `h3` for name, `span.text-red-600` for price (the site pre-formats both EUR and BGN into this span).
 - `main()` — loops pages 1–24, writes `result-dshome.txt`, sleeps 0.5s between live requests (skipped when cached).
 
-### scrape-praktiker.py
+### Single-page scrapers (praktiker, mrbricolage, bauhaus, homemax, temax, masterhaus, praktis)
 
-- Uses `te-product-box` for cards, first long `<a>` for name, `.price-wrapper` spans for EUR/BGN.
-- Writes `result-praktiker.txt`.
+Each defines `get_cards(soup)`, `get_name(box)`, `get_price(box)` and delegates to `scrape_common.scrape()` and `scrape_common.run()`. Site-specific notes:
 
-### scrape-mrbricolage.py
-
-- Uses `div.product` for cards, `h2.product__title a` for name, `div.product__price-value` for EUR/BGN.
-- Writes `result-mrbricolage.txt`.
-
-### scrape-bauhaus.py
-
-- Uses `div.product_holder` for cards, `a.product-name` for name, `div.product-price table tr` rows for EUR/BGN (price split across `td`/`sup` elements).
-- Writes `result-bauhaus.txt`.
-
-### scrape-homemax.py
-
-- Uses `div.product-box-item` for cards, `.product-box-title` for name, `.price-item-wrapper` for EUR/BGN (price split across `.price-holder` text + `sup` for decimals, `.currency` for unit).
-- Writes `result-homemax.txt`.
-
-### scrape-temax.py
-
-- Uses `li.product-item` for cards, `a.product-item-link` for name, `span.price` for EUR and `span.side-price` for BGN (separator child span stripped via direct text nodes).
-- Writes `result-temax.txt`.
-
-### scrape-masterhaus.py
-
-- Uses `li[data-id]` for cards, `h2 a` for name, `span.price-actual` for EUR and `span.price-second` for BGN.
-- `parse_price(el)` helper reconstructs price from direct text + `sup` decimal + `abbr` currency (e.g. `96` + `63` + `€` → `96.63 €`).
-- Writes `result-masterhaus.txt`.
-
-### scrape-praktis.py
-
-- Uses `article[data-name^="pc:root:"]` for cards, `a[data-name^="pc:default-title:"] span` for name.
-- Prices from `span[data-name="price-info-regular-price-value/currency"]` (EUR) and `span[data-name="price-info-regular-price-eur-value/currency"]` (BGN).
-- Each product `article` appears 4× in the HTML (default/hover variants at multiple breakpoints); deduplicated by product ID extracted from `data-name="pc:root:{id}"`.
-- Writes `result-praktis.txt`.
+- **praktiker** — `te-product-box` cards; first long `<a>` for name; `.price-wrapper` spans for EUR/BGN
+- **mrbricolage** — `div.product` cards; `h2.product__title a` for name; `div.product__price-value` for EUR/BGN; extra `Accept`/`Accept-Language` headers required for SSR rendering
+- **bauhaus** — `div.product_holder` cards; `a.product-name`; price from `div.product-price table tr` (value split across `td`/`sup`, currency in `small`)
+- **homemax** — `div.product-box-item` cards; `.product-box-title`; price from `.price-item-wrapper` (`.price-holder` text + `sup` decimal, `.currency` unit)
+- **temax** — `li.product-item` cards; `a.product-item-link`; `span.price` for EUR, `span.side-price` direct text nodes for BGN
+- **masterhaus** — `li[data-id]` cards; `h2 a`; `_parse_price()` helper reconstructs price from direct text + `sup` decimal + `abbr` currency (e.g. `96` + `63` + `€` → `96.63 €`)
+- **praktis** — `article[data-name^="pc:root:"]` cards, deduplicated by product ID (each appears 4× in HTML); `a[data-name^="pc:default-title:"] span` for name; prices from `span[data-name="price-info-regular-price-*"]` elements
 
 ## Known limitations / TODOs
 
