@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
-from scrape_common import HEADERS, scrape, run
+from common import HEADERS, scrape, run
 
 URL = "https://temax.bg/avto-i-velo-aksesoari/avtomobilni-prinadlezhnosti/PRODUCTAVTO-kompresor"
-CACHE_FILE = "cache/temax_cache.html"
-RESULT_FILE = "results/result-temax.txt"
+CACHE_FILE = "cache/temax.html"
+RESULT_FILE = "results/temax.txt"
 
 
 def get_cards(soup):

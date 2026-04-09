@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
-from scrape_common import HEADERS, scrape, run
+from common import HEADERS, scrape, run
 
 URL = "https://praktiker.bg/en/Avto-i-velo/Sigurnost-i-bezopasnost/Kompresori/c/P13060305?pageSize=92&currentPage=0"
-CACHE_FILE = "cache/praktiker_cache.html"
-RESULT_FILE = "results/result-praktiker.txt"
+CACHE_FILE = "cache/praktiker.html"
+RESULT_FILE = "results/praktiker.txt"
 
 
 def get_cards(soup):

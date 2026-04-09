@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
-from scrape_common import scrape, run
+from common import scrape, run
 
 URL = "https://mr-bricolage.bg/instrumenti/avtoaksesoari/kompresori-pompi/c/006008021?pageSize=50"
-CACHE_FILE = "cache/mrbricolage_cache.html"
-RESULT_FILE = "results/result-mrbricolage.txt"
+CACHE_FILE = "cache/mrbricolage.html"
+RESULT_FILE = "results/mrbricolage.txt"
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:124.0) Gecko/20100101 Firefox/124.0",
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",

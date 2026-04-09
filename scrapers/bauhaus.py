@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
-from scrape_common import HEADERS, scrape, run
+from common import HEADERS, scrape, run
 
 URL = "https://bauhaus.bg/pompi-i-kompresori-za-gumi/c/1928"
-CACHE_FILE = "cache/bauhaus_cache.html"
-RESULT_FILE = "results/result-bauhaus.txt"
+CACHE_FILE = "cache/bauhaus.html"
+RESULT_FILE = "results/bauhaus.txt"
 
 
 def get_cards(soup):

@@ -61,7 +61,7 @@ def main():
     total_parsed_all = 0
     total_cards_all = 0
 
-    with open("results/result-dshome.txt", "w", encoding="utf-8") as f:
+    with open("results/dshome.txt", "w", encoding="utf-8") as f:
         for page in range(1, 25):
             products, parsed_count, total_cards = scrape_page(page, cached=args.cached)
 
@@ -80,7 +80,7 @@ def main():
     print("\n=== SUMMARY ===")
     print(f"Total parsed: {total_parsed_all} / {total_cards_all}")
 
-    print("\nSaved to results/result-dshome.txt")
+    print("\nSaved to results/dshome.txt")
 
 
 if __name__ == "__main__":

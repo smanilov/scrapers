@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
-from scrape_common import HEADERS, scrape, run
+from common import HEADERS, scrape, run
 
 URL = "https://www.home-max.bg/instrumenti-i-oborudvane/avtoprinadlejnosti/avtoinstrumenti/pompi-i-kompresori/"
-CACHE_FILE = "cache/homemax_cache.html"
-RESULT_FILE = "results/result-homemax.txt"
+CACHE_FILE = "cache/homemax.html"
+RESULT_FILE = "results/homemax.txt"
 
 
 def get_cards(soup):

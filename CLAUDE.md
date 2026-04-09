@@ -6,14 +6,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Scrapes product listings (names and prices) from eight sites:
 
-- `dshome.bg/boltove` — bolts/fasteners, 24 pages, output to `result-dshome.txt`
-- `praktiker.bg` — compressors, single page, output to `result-praktiker.txt`
-- `mr-bricolage.bg` — compressors, single page, output to `result-mrbricolage.txt`
-- `bauhaus.bg` — compressors/pumps, single page, output to `result-bauhaus.txt`
-- `home-max.bg` — compressors/pumps, single page, output to `result-homemax.txt`
-- `temax.bg` — compressors, single page, output to `result-temax.txt`
-- `masterhaus.bg` — compressors, single page, output to `result-masterhaus.txt`
-- `praktis.bg` — compressors, single page, output to `result-praktis.txt`
+- `dshome.bg/boltove` — bolts/fasteners, 24 pages, output to `results/dshome.txt`
+- `praktiker.bg` — compressors, single page, output to `results/praktiker.txt`
+- `mr-bricolage.bg` — compressors, single page, output to `results/mrbricolage.txt`
+- `bauhaus.bg` — compressors/pumps, single page, output to `results/bauhaus.txt`
+- `home-max.bg` — compressors/pumps, single page, output to `results/homemax.txt`
+- `temax.bg` — compressors, single page, output to `results/temax.txt`
+- `masterhaus.bg` — compressors, single page, output to `results/masterhaus.txt`
+- `praktis.bg` — compressors, single page, output to `results/praktis.txt`
 
 ## Running the scrapers
 
@@ -26,14 +26,9 @@ Scrapes product listings (names and prices) from eight sites:
 Or directly (run from the project root):
 
 ```bash
-python3 scrapers/scrape-dshome.py [--cached]
-python3 scrapers/scrape-praktiker.py [--cached]
-python3 scrapers/scrape-mrbricolage.py [--cached]
-python3 scrapers/scrape-bauhaus.py [--cached]
-python3 scrapers/scrape-homemax.py [--cached]
-python3 scrapers/scrape-temax.py [--cached]
-python3 scrapers/scrape-masterhaus.py [--cached]
-python3 scrapers/scrape-praktis.py [--cached]
+python3 scrapers/dshome.py [--cached]
+python3 scrapers/praktiker.py [--cached]
+# etc.
 ```
 
 `--cached` reads from local HTML files instead of making network requests.
@@ -57,17 +52,10 @@ Note: home-max.bg displays round prices with a dash for cents (e.g. `17.- ЛВ.`
 Download cached HTML with `cache.sh`:
 
 ```bash
-./cache.sh dshome       # saves cache/dshome/page-1.html … page-24.html
-./cache.sh praktiker    # saves cache/praktiker_cache.html
-./cache.sh mrbricolage  # saves cache/mrbricolage_cache.html
-./cache.sh bauhaus      # saves cache/bauhaus_cache.html
-./cache.sh homemax      # saves cache/homemax_cache.html
-./cache.sh temax        # saves cache/temax_cache.html
-./cache.sh masterhaus   # saves cache/masterhaus_cache.html
-./cache.sh praktis      # saves cache/praktis_cache.html
+./cache.sh <dshome|praktiker|mrbricolage|bauhaus|homemax|temax|masterhaus|praktis>
 ```
 
-All targets use `-L` (follow redirects) and a realistic Firefox user-agent. mr-bricolage additionally sends `Accept` and `Accept-Language` headers required for SSR rendering.
+Saves to `cache/`. All targets use `-L` (follow redirects) and a Firefox user-agent. mr-bricolage additionally sends `Accept`/`Accept-Language` headers required for SSR rendering.
 
 Then run with `--cached` to parse from disk.
 
@@ -80,7 +68,7 @@ Install with: `pip install requests beautifulsoup4`
 
 ## Code structure
 
-### scrape_common.py
+### common.py
 
 Shared infrastructure used by all scrapers except dshome:
 
@@ -90,24 +78,29 @@ Shared infrastructure used by all scrapers except dshome:
 - `write_results(result_file, products, parsed_count, total_cards)` — writes output file
 - `run(result_file, cache_file, scrape_fn)` — parses `--cached` flag, calls `scrape_fn`, writes results, prints summary
 
-### scrape-dshome.py
+### dshome.py
 
-- `scrape_page(page, cached=False)` — reads `cache/dshome/page-{page}.html` or fetches. Uses `a[href*='/boltove/']` for cards, `h3` for name, `span.text-red-600` for price (the site pre-formats both EUR and BGN into this span).
-- `main()` — loops pages 1–24, writes `result-dshome.txt`, sleeps 0.5s between live requests (skipped when cached).
+Standalone (does not use common.py). Loops pages 1–24, sleeps 0.5s between live requests.
 
 ### Single-page scrapers (praktiker, mrbricolage, bauhaus, homemax, temax, masterhaus, praktis)
 
-Each defines `get_cards(soup)`, `get_name(box)`, `get_price(box)` and delegates to `scrape_common.scrape()` and `scrape_common.run()`. Site-specific notes:
+Each defines `get_cards(soup)`, `get_name(box)`, `get_price(box)` and delegates to `common`. Non-obvious details:
 
-- **praktiker** — `te-product-box` cards; first long `<a>` for name; `.price-wrapper` spans for EUR/BGN
-- **mrbricolage** — `div.product` cards; `h2.product__title a` for name; `div.product__price-value` for EUR/BGN; extra `Accept`/`Accept-Language` headers required for SSR rendering
-- **bauhaus** — `div.product_holder` cards; `a.product-name`; price from `div.product-price table tr` (value split across `td`/`sup`, currency in `small`)
-- **homemax** — `div.product-box-item` cards; `.product-box-title`; price from `.price-item-wrapper` (`.price-holder` text + `sup` decimal, `.currency` unit)
-- **temax** — `li.product-item` cards; `a.product-item-link`; `span.price` for EUR, `span.side-price` direct text nodes for BGN
-- **masterhaus** — `li[data-id]` cards; `h2 a`; `_parse_price()` helper reconstructs price from direct text + `sup` decimal + `abbr` currency (e.g. `96` + `63` + `€` → `96.63 €`)
-- **praktis** — `article[data-name^="pc:root:"]` cards, deduplicated by product ID (each appears 4× in HTML); `a[data-name^="pc:default-title:"] span` for name; prices from `span[data-name="price-info-regular-price-*"]` elements
+- **mrbricolage** — requires extra `Accept`/`Accept-Language` headers for SSR rendering; defined locally instead of using the shared `HEADERS`
+- **masterhaus** — `_parse_price()` reconstructs price from split DOM: direct text + `<sup>` decimal + `<abbr>` currency
+- **praktis** — each product card appears 4× in the HTML; `get_cards()` deduplicates by product ID from `data-name`
+
+## Testing
+
+`test.sh` runs every scraper with `--cached` and checks that `results/*.txt` is unchanged:
+
+```bash
+./test.sh
+```
+
+Uses `git diff` (working tree vs index) to detect changes. All result files are tracked, so any output regression shows up as a diff. `__pycache__/` is gitignored and safe to leave in place.
 
 ## Known limitations / TODOs
 
-- Page count (24) for dshome is hardcoded; dynamic detection not implemented.
+- Page count (24) for dshome is hardcoded.
 - All URLs are hardcoded to specific categories.
