@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this project does
 
-Scrapes product listings (names and prices) from six sites:
+Scrapes product listings (names and prices) from seven sites:
 
 - `dshome.bg/boltove` — bolts/fasteners, 24 pages, output to `result-dshome.txt`
 - `praktiker.bg` — compressors, single page, output to `result-praktiker.txt`
@@ -12,13 +12,14 @@ Scrapes product listings (names and prices) from six sites:
 - `bauhaus.bg` — compressors/pumps, single page, output to `result-bauhaus.txt`
 - `home-max.bg` — compressors/pumps, single page, output to `result-homemax.txt`
 - `temax.bg` — compressors, single page, output to `result-temax.txt`
+- `masterhaus.bg` — compressors, single page, output to `result-masterhaus.txt`
 
 ## Running the scrapers
 
 `run.sh` is the canonical entry point:
 
 ```bash
-./run.sh <dshome|praktiker|mrbricolage|bauhaus|homemax|temax> [--cached]
+./run.sh <dshome|praktiker|mrbricolage|bauhaus|homemax|temax|masterhaus> [--cached]
 ```
 
 Or directly:
@@ -30,6 +31,7 @@ python3 scrape-mrbricolage.py [--cached]
 python3 scrape-bauhaus.py [--cached]
 python3 scrape-homemax.py [--cached]
 python3 scrape-temax.py [--cached]
+python3 scrape-masterhaus.py [--cached]
 ```
 
 `--cached` reads from local HTML files instead of making network requests.
@@ -59,6 +61,7 @@ Download cached HTML with `cache.sh`:
 ./cache.sh bauhaus      # saves bauhaus_cache.html
 ./cache.sh homemax      # saves homemax_cache.html
 ./cache.sh temax        # saves temax_cache.html
+./cache.sh masterhaus   # saves masterhaus_cache.html
 ```
 
 All targets use `-L` (follow redirects) and a realistic Firefox user-agent. mr-bricolage additionally sends `Accept` and `Accept-Language` headers required for SSR rendering.
@@ -108,6 +111,12 @@ All scripts follow the same structure:
 
 - Uses `li.product-item` for cards, `a.product-item-link` for name, `span.price` for EUR and `span.side-price` for BGN (separator child span stripped via direct text nodes).
 - Writes `result-temax.txt`.
+
+### scrape-masterhaus.py
+
+- Uses `li[data-id]` for cards, `h2 a` for name, `span.price-actual` for EUR and `span.price-second` for BGN.
+- `parse_price(el)` helper reconstructs price from direct text + `sup` decimal + `abbr` currency (e.g. `96` + `63` + `€` → `96.63 €`).
+- Writes `result-masterhaus.txt`.
 
 ## Known limitations / TODOs
 
