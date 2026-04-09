@@ -1,26 +1,32 @@
 #!/usr/bin/env python3
 
+import argparse
 import requests
 from bs4 import BeautifulSoup
 import time
 
 BASE_URL = "https://www.dshome.bg/boltove?page={}"
+CACHE_DIR = "dshome"
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (X11; Linux x86_64)"
 }
 
-def scrape_page(page):
-    url = BASE_URL.format(page)
+def scrape_page(page, cached=False):
     print(f"\n=== PAGE {page} ===")
 
-    try:
-        r = requests.get(url, headers=HEADERS, timeout=10)
-        r.raise_for_status()
-    except Exception as e:
-        print(f"Error fetching page {page}: {e}")
-        return [], 0, 0
+    if cached:
+        with open(f"{CACHE_DIR}/page-{page}.html", encoding="utf-8") as f:
+            html = f.read()
+    else:
+        try:
+            r = requests.get(BASE_URL.format(page), headers=HEADERS, timeout=10)
+            r.raise_for_status()
+        except Exception as e:
+            print(f"Error fetching page {page}: {e}")
+            return [], 0, 0
+        html = r.text
 
-    soup = BeautifulSoup(r.text, "html.parser")
+    soup = BeautifulSoup(html, "html.parser")
 
     cards = soup.select("a[href*='/boltove/']")
     total_cards = len(cards)
@@ -48,12 +54,16 @@ def scrape_page(page):
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--cached", action="store_true", help=f"Read from {CACHE_DIR}/ instead of fetching")
+    args = parser.parse_args()
+
     total_parsed_all = 0
     total_cards_all = 0
 
     with open("result.txt", "w", encoding="utf-8") as f:
         for page in range(1, 25):
-            products, parsed_count, total_cards = scrape_page(page)
+            products, parsed_count, total_cards = scrape_page(page, cached=args.cached)
 
             total_parsed_all += parsed_count
             total_cards_all += total_cards
@@ -64,7 +74,8 @@ def main():
             for name, price in products:
                 f.write(f"{name} | {price}\n")
 
-            time.sleep(0.5)
+            if not args.cached:
+                time.sleep(0.5)
 
     print("\n=== SUMMARY ===")
     print(f"Total parsed: {total_parsed_all} / {total_cards_all}")

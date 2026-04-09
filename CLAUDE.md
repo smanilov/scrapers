@@ -4,22 +4,50 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this project does
 
-Scrapes bolt/fastener product listings (names and prices) from `dshome.bg/boltove`, paginating through 24 pages, and saves the output to `result.txt`.
+Scrapes bolt/fastener product listings (names and prices) from two sites:
 
-## Running the scraper
+- `dshome.bg/boltove` — paginating through 24 pages, output to `result.txt`
+- `praktiker.bg` — compressors category, single page, output to `result-praktiker.txt`
 
-See `run.sh` for the canonical invocation. Directly:
+## Running the scrapers
+
+`run.sh` is the canonical entry point:
 
 ```bash
-python3 scrape.py
+./run.sh <dshome|praktiker> [--cached]
 ```
 
-Output is written to `result.txt` in the format:
+Or directly:
+
+```bash
+python3 scrape-dshome.py [--cached]
+python3 scrape-praktiker.py [--cached]
 ```
-=== PAGE N ===
+
+`--cached` reads from local HTML files instead of making network requests.
+
+## Output format
+
+Both scripts write in the same format:
+
+```
+=== PAGE N ===        # dshome (one per page); praktiker uses === PRODUCTS ===
 Parsed: X / Y
 Product name | price
 ```
+
+Praktiker prices include both currencies: `name | 9.71 € | 18.99 лв.`
+
+## Caching
+
+Download cached HTML with the provided shell scripts:
+
+```bash
+./cache-dshome.sh       # saves dshome/page-1.html … page-24.html
+./cache-praktiker.sh    # saves praktiker_cache.html
+```
+
+Then run with `--cached` to parse from disk.
 
 ## Dependencies
 
@@ -30,13 +58,17 @@ Install with: `pip install requests beautifulsoup4`
 
 ## Code structure
 
-All logic is in `scrape.py`:
+### scrape-dshome.py
 
-- `scrape_page(page)` — fetches and parses one page; returns `(products, parsed_count, total_cards)`. Uses CSS selector `a[href*='/boltove/']` to find product cards, then `h3` for name and `span.text-red-600` for price.
-- `main()` — loops pages 1–24, writes results to `result.txt`, sleeps 0.5s between requests.
+- `scrape_page(page, cached=False)` — fetches or reads `dshome/page-{page}.html`; returns `(products, parsed_count, total_cards)`. Uses CSS selector `a[href*='/boltove/']` to find product cards, then `h3` for name and `span.text-red-600` for price.
+- `main()` — parses `--cached` flag, loops pages 1–24, writes `result.txt`, sleeps 0.5s between live requests (skipped when cached).
 
-## Known limitations / TODOs (from git history)
+### scrape-praktiker.py
 
-- Page count (24) is hardcoded; dynamic detection of total pages is not yet implemented.
-- Results-per-page is fixed at 24; was noted as needing attention.
-- Caching was added but there is no cache invalidation or conditional fetch logic visible in current code.
+- `scrape_page(cached=False)` — fetches or reads `praktiker_cache.html`; returns `(products, parsed_count, total_cards)`. Uses `te-product-box` for product cards, first long `<a>` text for name, `.price-wrapper` spans for EUR (`€`) and BGN (`лв.`) prices.
+- `main()` — parses `--cached` flag, calls `scrape_page()`, writes `result-praktiker.txt`.
+
+## Known limitations / TODOs
+
+- Page count (24) for dshome is hardcoded; dynamic detection not implemented.
+- Praktiker URL is hardcoded to the compressors category.
