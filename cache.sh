@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -eo pipefail
 
-target="${1:?Usage: cache.sh <dshome|praktiker|mrbricolage>}"
+target="${1:?Usage: cache.sh <dshome|praktiker|mrbricolage|bauhaus|homemax|temax|masterhaus|praktis|autodoc>}"
 
 UA="Mozilla/5.0 (X11; Linux x86_64; rv:124.0) Gecko/20100101 Firefox/124.0"
 
@@ -45,6 +45,15 @@ case "$target" in
     praktis)
         curl -L -A "$UA" -o cache/praktis.html \
             "https://praktis.bg/avto-i-velo-svyat/preporachitelno-oborudvane-za-avtomobil/kompresori-za-avtomobil"
+        ;;
+    autodoc)
+        mkdir -p cache/autodoc
+        for page in $(seq 1 28); do
+            echo "Downloading page $page..."
+            curl -L -A "$UA" -o "cache/autodoc/page-${page}.html" \
+                "https://www.autodoc.parts/car-accessories/car-jacks?all-categories=all&categories%5B0%5D=4710%7C5203&page=${page}"
+            sleep 0.5
+        done
         ;;
     *)
         echo "Unknown target: $target" >&2
