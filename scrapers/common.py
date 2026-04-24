@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
+import os
 import requests
 from bs4 import BeautifulSoup
 
@@ -19,7 +20,11 @@ def load_html(url, cache_file, headers, cached):
     except Exception as e:
         print(f"Error fetching: {e}")
         return None
-    return r.text
+    html = r.text
+    os.makedirs(os.path.dirname(cache_file) or ".", exist_ok=True)
+    with open(cache_file, "w", encoding="utf-8") as f:
+        f.write(html)
+    return html
 
 
 def scrape(url, cache_file, headers, cached, get_cards, get_name, get_price):
@@ -52,10 +57,15 @@ def write_results(result_file, products, parsed_count, total_cards):
             f.write(f"{name} | {price}\n")
 
 
-def run(result_file, cache_file, scrape_fn):
+def run(result_file, cache_file, scrape_fn, url=None, headers=None):
     parser = argparse.ArgumentParser()
     parser.add_argument("--cached", action="store_true", help=f"Read from {cache_file} instead of fetching")
+    parser.add_argument("--download", action="store_true", help=f"Fetch and save to {cache_file} without parsing")
     args = parser.parse_args()
+    if args.download:
+        load_html(url, cache_file, headers, cached=False)
+        print(f"Saved to {cache_file}")
+        return
     products, parsed_count, total_cards = scrape_fn(cached=args.cached)
     write_results(result_file, products, parsed_count, total_cards)
     print("\n=== SUMMARY ===")

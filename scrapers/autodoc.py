@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
+import os
 import requests
 from bs4 import BeautifulSoup
 import time
@@ -15,6 +16,24 @@ NICE_DELAY = 2.0 # seconds
 RETRY_DELAY = 5.0
 
 
+def fetch_page(page):
+    """Fetch page HTML with retry on 403."""
+    retry_delay = RETRY_DELAY
+    while True:
+        try:
+            r = requests.get(BASE_URL.format(page), headers=HEADERS, timeout=10)
+            if r.status_code == 403:
+                print(f"403 on page {page}, retrying in {retry_delay:.0f}s...")
+                time.sleep(retry_delay)
+                retry_delay = min(retry_delay * 2, 120)
+                continue
+            r.raise_for_status()
+        except requests.HTTPError as e:
+            print(f"Error fetching page {page}: {e}")
+            return None
+        return r.text
+
+
 def scrape_page(page, cached=False):
     print(f"\n=== PAGE {page} ===")
 
@@ -22,21 +41,9 @@ def scrape_page(page, cached=False):
         with open(f"{CACHE_DIR}/page-{page}.html", encoding="utf-8") as f:
             html = f.read()
     else:
-        retry_delay = RETRY_DELAY
-        while True:
-            try:
-                r = requests.get(BASE_URL.format(page), headers=HEADERS, timeout=10)
-                if r.status_code == 403:
-                    print(f"403 on page {page}, retrying in {retry_delay:.0f}s...")
-                    time.sleep(retry_delay)
-                    retry_delay = min(retry_delay * 2, 120)
-                    continue
-                r.raise_for_status()
-            except requests.HTTPError as e:
-                print(f"Error fetching page {page}: {e}")
-                return [], 0, 0
-            break
-        html = r.text
+        html = fetch_page(page)
+        if html is None:
+            return [], 0, 0
 
     soup = BeautifulSoup(html, "html.parser")
 
@@ -68,7 +75,20 @@ def scrape_page(page, cached=False):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--cached", action="store_true", help=f"Read from {CACHE_DIR}/ instead of fetching")
+    parser.add_argument("--download", action="store_true", help=f"Fetch and save to {CACHE_DIR}/ without parsing")
     args = parser.parse_args()
+
+    if args.download:
+        os.makedirs(CACHE_DIR, exist_ok=True)
+        for page in range(1, LAST_PAGE + 1):
+            print(f"Downloading page {page}...")
+            html = fetch_page(page)
+            if html is not None:
+                with open(f"{CACHE_DIR}/page-{page}.html", "w", encoding="utf-8") as f:
+                    f.write(html)
+            time.sleep(NICE_DELAY)
+        return
+
 
     total_parsed_all = 0
     total_cards_all = 0

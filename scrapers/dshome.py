@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
+import os
 import requests
 from bs4 import BeautifulSoup
 import time
@@ -56,7 +57,24 @@ def scrape_page(page, cached=False):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--cached", action="store_true", help=f"Read from {CACHE_DIR}/ instead of fetching")
+    parser.add_argument("--download", action="store_true", help=f"Fetch and save to {CACHE_DIR}/ without parsing")
     args = parser.parse_args()
+
+    if args.download:
+        os.makedirs(CACHE_DIR, exist_ok=True)
+        for page in range(1, 25):
+            print(f"Downloading page {page}...")
+            try:
+                r = requests.get(BASE_URL.format(page), headers=HEADERS, timeout=10)
+                r.raise_for_status()
+            except Exception as e:
+                print(f"Error fetching page {page}: {e}")
+                continue
+            with open(f"{CACHE_DIR}/page-{page}.html", "w", encoding="utf-8") as f:
+                f.write(r.text)
+            time.sleep(0.5)
+        return
+
 
     total_parsed_all = 0
     total_cards_all = 0

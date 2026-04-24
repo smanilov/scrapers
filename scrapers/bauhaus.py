@@ -40,4 +40,4 @@ def scrape_page(cached=False):
 
 
 if __name__ == "__main__":
-    run(RESULT_FILE, CACHE_FILE, scrape_page)
+    run(RESULT_FILE, CACHE_FILE, scrape_page, url=URL, headers=HEADERS)
