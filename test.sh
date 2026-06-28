@@ -9,7 +9,7 @@ RESET='\033[0m'
 PASS=0
 FAIL=0
 
-for name in bauhaus dshome homemax masterhaus mrbricolage praktiker praktis temax; do
+for name in bauhaus dshome homemax masterhaus mrbean2cup mrbricolage praktiker praktis temax; do
     printf "%-14s" "$name"
     python3 "scrapers/${name}.py" --cached > /dev/null
     if git diff --stat -- "results/${name}.txt" | grep -q "results/"; then

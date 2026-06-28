@@ -14,6 +14,7 @@ Scrapes product listings (names and prices) from eight sites:
 - `temax.bg` — compressors, single page, output to `results/temax.txt`
 - `masterhaus.bg` — compressors, single page, output to `results/masterhaus.txt`
 - `praktis.bg` — compressors, single page, output to `results/praktis.txt`
+- `mrbean2cup.co.uk` — coffee-machine spare parts (Gaggia Classic V3), JSON API, output to `results/mrbean2cup.txt`
 
 ## Running the scrapers
 
@@ -81,6 +82,10 @@ Shared infrastructure used by all scrapers except dshome:
 ### dshome.py
 
 Standalone (does not use common.py). Loops pages 1–24, sleeps 0.5s between live requests.
+
+### mrbean2cup.py
+
+Standalone (reuses only `HEADERS` and `write_results` from common.py). The page is React-rendered, so there is no server-side product HTML to parse. Instead it fetches the machine page, extracts `machineCategoryId` from the React `data-props` JSON, then POSTs to `/ProductManagerData/GetMachineProductDataJsonFrontEnd` (`PageSize=1000`) and parses the returned `ProductData` array. Cache is JSON (`cache/mrbean2cup.json`), not HTML. Prices are GBP-only (`£8.40 Excl VAT`, written as-is); there is no EUR/BGN. Products with no price (out of stock / special order / discontinued) have a null `ProductPrice` and are skipped, so parsed count is below total.
 
 ### Single-page scrapers (praktiker, mrbricolage, bauhaus, homemax, temax, masterhaus, praktis)
 
